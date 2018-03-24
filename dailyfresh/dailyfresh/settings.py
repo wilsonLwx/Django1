@@ -12,8 +12,12 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# 把apps加入到导包路径
+sys.path.insert(1, os.path.join(BASE_DIR, 'apps'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -35,6 +39,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cart',
+    'orders',
+    'goods',
+    'users',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -81,6 +89,12 @@ DATABASES = {
         'PASSWORD': 'mysql'
     }
 }
+
+# 数据库主从配置读写分离
+DATABASE_ROUTERS = ['utils.db_routers.MasterSlaveDBRouter']
+
+# 应用.用户模型类
+AUTH_USER_MODEL = 'users.User'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
