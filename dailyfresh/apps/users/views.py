@@ -1,6 +1,8 @@
 import re
 
 from django import db
+from django.conf import settings
+from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -47,4 +49,28 @@ class RegisterView(View):
         user.is_active = False
         # 保存数据库
         user.save()
+
+        # 生成token
+        token = user.generate_active_token()
+
+        # 接收邮件的用户 可以是多个
+        recipient_list = ['15000108650@163.com']
+
+        # 发送激活邮件
+        send_active_email(recipient_list, user.username, token)
+
         return HttpResponse('ok')
+
+
+# 激活视图
+class ActiveView(View):
+    def get(self, request, token):
+        pass
+
+
+def send_active_email(recipient_list, user_name, token):
+    html_body = '<h1>尊敬的用户 %s, 感谢您注册天天生鲜！</h1>' \
+                '<br/><p>请点击此链接激活您的帐号<a href="http://127.0.0.1:8000/users/active/%s">' \
+                'http://127.0.0.1:8000/users/active/%s</a></p>' % (user_name, token, token)
+    # 发送激活邮件
+    send_mail('天天生鲜激活', '', settings.EMAIL_FROM, recipient_list, html_message=html_body)
