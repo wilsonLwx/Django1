@@ -3,6 +3,8 @@ import re
 import itsdangerous
 from django import db
 from django.conf import settings
+from django.contrib.auth import authenticate
+
 from users.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -91,4 +93,35 @@ class ActiveView(View):
         user.is_active = True
         user.save()
 
-        return HttpResponse('去登录页')
+        # 重定向到登录页
+        return redirect(reverse('users:login'))
+
+
+# 登录的的类视图
+class LoginView(View):
+    def get(self, request):
+        return render(request, 'login.html')
+
+    def post(self, request):
+        # 获取用户登录数据
+        username = request.POST.get('username')
+        password = request.POST.get('pwd')
+
+        # 校验数据
+        # 判断数据是否为空
+        if not all([username, password]):
+            return redirect(reverse('users:login'))
+
+        # 如果不为空 从数据库获取用户信息
+        # user = User.objects.filter(username=username, password=password)
+        # django 提供了验证方法 成功了返回user对象 不成功返回None
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'errmsg': '用户名或密码错误'})
+
+        # 判断是否激活
+        if not user.is_active:
+            return render(request, 'login.html', {'errmsg': '用户未激活'})
+
+        # 去商品主页
+        return HttpResponse('去商品主页')
