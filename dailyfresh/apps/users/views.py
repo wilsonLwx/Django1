@@ -1,6 +1,9 @@
 import re
 
+import itsdangerous
 from django import db
+from django.conf import settings
+from users.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -9,8 +12,9 @@ from django.shortcuts import render, redirect
 from django.views.generic import View
 
 # 注册的类视图
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+
 from celery_tasks.tasks import send_active_email
-from users.models import User
 
 
 class RegisterView(View):
@@ -64,7 +68,27 @@ class RegisterView(View):
 # 激活视图
 class ActiveView(View):
     def get(self, request, token):
-        pass
+        # 解析用户id
+        serializer = Serializer(settings.SECRET_KEY, 3600)
+        try:
+            result = serializer.loads(token)
+        except itsdangerous.SignatureExpired:
+            return HttpResponse('激活邮件已过期')
+        print(result)
+        userid = result.get('confirm')
+        print(userid)
 
+        # 根据用户id获取用户
+        try:
+            user = User.objects.get(id=userid)
+        except User.DoesNotExist:
+            return HttpResponse('用户不存在')
 
+        if user.is_active:
+            return HttpResponse('用户已经激活')
 
+        # 激活用户
+        user.is_active = True
+        user.save()
+
+        return HttpResponse('去登录页')
