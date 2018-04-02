@@ -3,7 +3,7 @@ import re
 import itsdangerous
 from django import db
 from django.conf import settings
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 
 from users.models import User
 from django.core.urlresolvers import reverse
@@ -122,6 +122,19 @@ class LoginView(View):
         # 判断是否激活
         if not user.is_active:
             return render(request, 'login.html', {'errmsg': '用户未激活'})
+
+        # django提供的 用来保存用户信息到session的方法 比如10天不用重复登录
+        login(request, user)
+
+        # 获取用户是否勾选记住用户名
+        remembered = request.POST.get('remembered')
+
+        # 如果用户勾选 传过来的值就是on
+        if remembered != 'on':
+            # 设置session过期时间 0表示关闭浏览器就过期 None表示2周
+            request.session.set_expiry(0)
+        else:
+            request.session.set_expiry(None)
 
         # 去商品主页
         return HttpResponse('去商品主页')
