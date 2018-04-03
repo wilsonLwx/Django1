@@ -5,8 +5,8 @@ from django import db
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 
-from users.models import User
-from utils.views import LoginRequired
+from users.models import User, Address
+from utils.views import LoginRequiredMixin
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -137,12 +137,17 @@ class LoginView(View):
         else:
             request.session.set_expiry(None)
 
-        # 去商品主页
-        return HttpResponse('去商品主页')
+        # 如果之前是从用户相关页面重定向到登录页面的 登陆之后就跳转到之前页面
+        next = request.GET.get('next')
+        if next is None:
+            # 去商品主页
+            return HttpResponse('去商品主页')
+        else:
+            return redirect(next)
 
 
 # 登出类视图
-class LogoutView(LoginRequired, View):
+class LogoutView(LoginRequiredMixin, View):
     def get(self, request):
         # 同样django提供了logout()的登出方法
         logout(request)
@@ -151,9 +156,35 @@ class LogoutView(LoginRequired, View):
 
 
 # 收货地址
-class AddressView(LoginRequired, View):
+class AddressView(LoginRequiredMixin, View):
     def get(self, request):
-        # 判断用户是否登录
+        # 获取用信息
+        user = request.user
+        try:
+            # 根据创建用户时间获取最近地址
+            address = user.address_set.latest('create_time')
+        except Address.DoesNotExist:
+            address = None
 
+        context = {"address": address}
 
-        return render(request, 'user_center_site.html')
+        return render(request, 'user_center_site.html', context)
+
+    def post(self, request):
+        """修改地址信息"""
+        user = request.user
+        # 获取用户输入信息
+        recv_name = request.POST.get('recv_name')
+        addr = request.POST.get('addr')
+        zip_code = request.POST.get('zip_code')
+        recv_mobile = request.POST.get('recv_mobile')
+        # 校验完整性 如果都不为空 创建该用户信息 保存到数据库
+        if all([recv_name, addr, zip_code, recv_mobile]):
+            Address.objects.create(
+                user=user,
+                receiver_name=recv_name,
+                receiver_mobile=recv_mobile,
+                detail_addr=addr,
+                zip_code=zip_code
+            )
+        return redirect(reverse('users:address'))
