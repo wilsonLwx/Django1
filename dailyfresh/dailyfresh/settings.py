@@ -88,7 +88,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': 'mysql'
     },
-    'slave':{
+    'slave': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'dailyfresh',
         'HOST': '192.168.17.147',
@@ -134,3 +134,22 @@ EMAIL_PORT = 25  # 发邮件端口
 EMAIL_HOST_USER = '15000108650@163.com'  # 授权的邮箱
 EMAIL_HOST_PASSWORD = '1a2b3c'  # 邮箱授权时获得的密码，非注册登录密码
 EMAIL_FROM = '15000108650@163.com'  # 发件人抬头 就是发送用的邮箱地址
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://192.168.17.147:6379/5",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+}
+
+# Session
+# http://django-redis-chs.readthedocs.io/zh_CN/latest/#session-backend
+# 指定session存在redis里
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+# 如果用户未登录 指定跳转登录页面
+LOGIN_URL = '/users/login'

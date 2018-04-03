@@ -3,9 +3,10 @@ import re
 import itsdangerous
 from django import db
 from django.conf import settings
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 
 from users.models import User
+from utils.views import LoginRequired
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -138,3 +139,21 @@ class LoginView(View):
 
         # 去商品主页
         return HttpResponse('去商品主页')
+
+
+# 登出类视图
+class LogoutView(LoginRequired, View):
+    def get(self, request):
+        # 同样django提供了logout()的登出方法
+        logout(request)
+
+        return HttpResponse('OK')
+
+
+# 收货地址
+class AddressView(LoginRequired, View):
+    def get(self, request):
+        # 判断用户是否登录
+
+
+        return render(request, 'user_center_site.html')
