@@ -208,7 +208,13 @@ class UserInfoView(LoginRequiredMixin, View):
         # 获取数据 lrange 0 4 前5个商品的id
         sku_ids = conn.lrange('history_%s' % user.id, 0, 4)
         # 去数据库查对应的商品
-        skus = GoodsSKU.objects.filter(id__in=sku_ids)
+        # skus = GoodsSKU.objects.filter(id__in=sku_ids) 顺序不符合要求
+
+        skus = []
+        for sku_id in sku_ids:
+            # 查询每一个sku 添加到列表中
+            sku = GoodsSKU.objects.get(id=sku_id)
+            skus.append(sku)
         context = {
             'address': address,
             'skus': skus
