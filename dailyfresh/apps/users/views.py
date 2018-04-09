@@ -4,7 +4,9 @@ import itsdangerous
 from django import db
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
+from django_redis import get_redis_connection
 
+from goods.models import GoodsSKU
 from users.models import User, Address
 from utils.views import LoginRequiredMixin
 from django.core.urlresolvers import reverse
@@ -188,3 +190,28 @@ class AddressView(LoginRequiredMixin, View):
                 zip_code=zip_code
             )
         return redirect(reverse('users:address'))
+
+
+class UserInfoView(LoginRequiredMixin, View):
+    def get(self, request):
+        # 获取用信息
+        user = request.user
+        try:
+            # 根据创建用户时间获取最近地址
+            address = user.address_set.latest('create_time')
+        except Address.DoesNotExist:
+            address = None
+
+        # 获取浏览历史记录  history_userid : [sku1.id,sku2.id,.....]
+        # 使用django_redis源生客户端
+        conn = get_redis_connection('default')
+        # 获取数据 lrange 0 4 前5个商品的id
+        sku_ids = conn.lrange('history_%s' % user.id, 0, 4)
+        # 去数据库查对应的商品
+        skus = GoodsSKU.objects.filter(id__in=sku_ids)
+        context = {
+            'address': address,
+            'skus': skus
+        }
+
+        return render(request, 'user_center_info.html', context)

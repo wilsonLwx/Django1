@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'^login$', views.LoginView.as_view(), name='login'),  # 登录
     url(r'^logout$', views.LogoutView.as_view(), name='logout'),  # 登出
     url(r'^address$', views.AddressView.as_view(), name='address'),  # 收货地址
+    url(r'^info$', views.UserInfoView.as_view(), name='info'),  # 用户信息
 ]
