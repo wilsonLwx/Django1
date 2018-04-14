@@ -4,6 +4,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.template import loader
 from django.views.generic import View
+from django_redis import get_redis_connection
 
 from goods.models import GoodsCategory, IndexGoodsBanner, \
     IndexPromotionBanner, IndexCategoryGoodsBanner
@@ -56,5 +57,19 @@ class IndexView(View):
             cache.set('index_page_static_cache', context, 3600)
         else:
             print("使用的是缓存数据")
+
+        cart_num = 0
+        user = request.user
+        if user.is_authenticated():
+            # 获取redis链接实例
+            redis_conn = get_redis_connection('default')
+
+            # 获取购物车数据
+            cart_dict = redis_conn.hgetall('cart_%s' % user.id)
+            for cart in cart_dict.values():
+                # 计算购物车的总数量
+                cart_num += int(cart)
+        # 将数据添加到context里
+        context['cart_num'] = cart_num
 
         return render(request, 'index.html', context)
