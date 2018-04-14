@@ -39,6 +39,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tinymce', # 富文本
     'cart',
     'orders',
     'goods',
@@ -153,3 +154,19 @@ SESSION_CACHE_ALIAS = "default"
 
 # 如果用户未登录 指定跳转登录页面
 LOGIN_URL = '/users/login'
+
+
+# 配置Django自定义存储系统
+DEFAULT_FILE_STORAGE = 'utils.fastdfs.storage.FastDFSStorage'
+
+FDFS_CLIENT = os.path.join(BASE_DIR, 'utils/fastdfs/client.conf')
+
+SERVER_IP = 'http://192.168.17.147:8888/'
+
+# 富文本配置
+TINYMCE_DEFAULT_CONFIG={
+    'theme':'advanced',# 丰富样式
+    'width':600,
+    'height':400,
+}
+

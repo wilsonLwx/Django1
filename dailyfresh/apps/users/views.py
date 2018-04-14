@@ -67,7 +67,7 @@ class RegisterView(View):
         # 发送激活邮件
         send_active_email.delay(recipient_list, user.username, token)
 
-        return HttpResponse('ok')
+        return redirect(reverse('users:login'))
 
 
 # 激活视图
@@ -143,7 +143,7 @@ class LoginView(View):
         next = request.GET.get('next')
         if next is None:
             # 去商品主页
-            return HttpResponse('去商品主页')
+            return redirect(reverse('goods:index'))
         else:
             return redirect(next)
 
@@ -154,7 +154,7 @@ class LogoutView(LoginRequiredMixin, View):
         # 同样django提供了logout()的登出方法
         logout(request)
 
-        return HttpResponse('OK')
+        return redirect(reverse('goods:index'))
 
 
 # 收货地址

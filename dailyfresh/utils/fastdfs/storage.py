@@ -4,7 +4,6 @@ from fdfs_client.client import Fdfs_client
 
 
 class FastDFSStorage(Storage):
-
     def __init__(self, client_conf=None, server_ip=None):
         if client_conf is None:
             # 如果使用者 没有传 就使用默认的配置文件
