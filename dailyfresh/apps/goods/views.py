@@ -13,7 +13,7 @@ class IndexView(View):
     def get(self, request):
 
         # 先从redis中获取缓存数据
-        context = cache.get('indexpage_static_cache')
+        context = cache.get('index_page_static_cache')
 
         if context is None:
             print('缓存中没有数据')
@@ -52,8 +52,8 @@ class IndexView(View):
             # content = loader.render_to_string('index.html', context)
 
             # print(content)
-            # 把登录后用的相同数据 保存到缓存里 不用每次都去查找
-            cache.set('indexpage_static_cache', context, 3600)
+            # 把登录后用的相同数据 保存到缓存里 不用每次都去查找 settings里的CACHES指定了缓存默认存储路径
+            cache.set('index_page_static_cache', context, 3600)
         else:
             print("使用的是缓存数据")
 
