@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 
@@ -144,3 +145,73 @@ class DetailView(View):
         context['cart_num'] = cart_num
 
         return render(request, 'detail.html', context)
+
+
+class ListView(View):
+    def get(self, request, category_id, page):
+        # 获取排序
+        sort = request.Get.get('sort')
+        # 当前类别
+        try:
+            category = GoodsCategory.objects.get(id=category_id)
+        except GoodsCategory.DoesNotExist:
+            return redirect(reverse('goods:index'))
+
+        # 所有类别
+        categorys = GoodsCategory.objects.all()
+
+        # 新品推荐
+        new_sku = GoodsSKU.objects.filter(category=category).order_by('-create_time')[:2]
+
+        # 排序 默认defaul 价格price 人气hot
+        if sort == 'price':
+            # 所有商品
+            skus = GoodsSKU.objects.filter(category=category).order_by('price')
+        elif sort == 'hot':
+            skus = GoodsSKU.objects.filter(category=category).order_by('-sales')
+        else:
+            # 排序
+            sort = 'default'
+            skus = GoodsSKU.objects.filter(category=category)
+
+        # 分页
+        paginator = Paginator(skus, 2)
+
+        # 如果总页数小于等于五 有多少页就返回多少页
+        if paginator.num_pages <= 5:
+            page_list = paginator.page_range
+        # 当前页小于等于三 page_list=[1,2,3,4,5]
+        elif page <= 3:
+            page_list = range(1, 6)
+        # 当前页处于最后三页的时候   page_list 为最后五页
+        elif paginator.num_pages - page <= 2:
+            page_list = range(paginator.num_pages - 4, paginator.num_pages + 1)
+        # 其他情况
+        else:
+            page_list = range(page - 2, page + 3)
+
+        context = {
+            'sort': sort,
+            'category': category,
+            'categorys': categorys,
+            'new_sku': new_sku,
+            'skus': skus,
+            'page_list': page_list,
+        }
+        cart_num = 0
+        user = request.user
+
+        # 用户已经登录
+        if user.is_authenticated():
+            # 获取redis链接实例
+            redis_conn = get_redis_connection('default')
+
+            # 获取购物车数据
+            cart_dict = redis_conn.hgetall('cart_%s' % user.id)
+            for cart in cart_dict.values():
+                # 计算购物车的总数量
+                cart_num += int(cart)
+
+        context['cart_num'] = cart_num
+
+        return render(request, 'list.html', context)
