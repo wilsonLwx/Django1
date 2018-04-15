@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 
@@ -150,7 +150,7 @@ class DetailView(View):
 class ListView(View):
     def get(self, request, category_id, page):
         # 获取排序
-        sort = request.Get.get('sort')
+        sort = request.GET.get('sort')
         # 当前类别
         try:
             category = GoodsCategory.objects.get(id=category_id)
@@ -161,7 +161,7 @@ class ListView(View):
         categorys = GoodsCategory.objects.all()
 
         # 新品推荐
-        new_sku = GoodsSKU.objects.filter(category=category).order_by('-create_time')[:2]
+        new_skus = GoodsSKU.objects.filter(category=category).order_by('-create_time')[:2]
 
         # 排序 默认defaul 价格price 人气hot
         if sort == 'price':
@@ -176,6 +176,14 @@ class ListView(View):
 
         # 分页
         paginator = Paginator(skus, 2)
+        page = int(page)
+
+        # 当向page()提供一个有效值，但是那个页面上没有任何对象时抛出EmptyPage
+        try:
+            skus_page = paginator.page(page)
+        except EmptyPage:
+            page = 1
+            skus_page = paginator.page(page)
 
         # 如果总页数小于等于五 有多少页就返回多少页
         if paginator.num_pages <= 5:
@@ -190,12 +198,13 @@ class ListView(View):
         else:
             page_list = range(page - 2, page + 3)
 
+
         context = {
             'sort': sort,
             'category': category,
             'categorys': categorys,
-            'new_sku': new_sku,
-            'skus': skus,
+            'new_skus': new_skus,
+            'skus_page': skus_page,
             'page_list': page_list,
         }
         cart_num = 0
