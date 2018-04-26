@@ -221,3 +221,4 @@ class UserInfoView(LoginRequiredMixin, View):
         }
 
         return render(request, 'user_center_info.html', context)
+
